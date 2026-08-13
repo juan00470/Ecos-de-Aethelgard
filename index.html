@@ -2,72 +2,157 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ecos de Aethelgard - Supervivencia Extrema (200+ Días)</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Ecos de Aethelgard - PC & Móvil</title>
     <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        body, html { width: 100%; height: 100%; background: #030306; color: #fff; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; overflow: hidden; }
-        #ui-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; display: flex; flex-direction: column; justify-content: space-between; padding: 15px; z-index: 10; }
-        .panel { background: rgba(10, 10, 20, 0.85); border: 1px solid rgba(0, 255, 204, 0.4); border-radius: 8px; padding: 10px 15px; backdrop-filter: blur(6px); pointer-events: auto; box-shadow: 0 4px 20px rgba(0,0,0,0.6); }
-        .top-bar { display: flex; justify-content: space-between; align-items: center; }
-        .stats-group { display: flex; gap: 20px; font-size: 13px; font-weight: bold; flex-wrap: wrap; }
-        .stat-item span { color: #00ffcc; }
-        .bottom-bar { display: flex; gap: 15px; height: 140px; }
-        .chat-box { flex: 2; display: flex; flex-direction: column; }
-        .chat-messages { flex: 1; overflow-y: auto; font-size: 11px; color: #a5b1c2; display: flex; flex-direction: column; gap: 4px; margin-bottom: 5px; }
-        .action-bar { flex: 1; display: flex; flex-direction: column; gap: 8px; }
-        .btn { background: linear-gradient(135deg, #00b894, #00cec9); border: none; color: white; padding: 8px 12px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 12px; transition: all 0.2s; box-shadow: 0 2px 8px rgba(0,206,201,0.3); }
-        .btn:hover { filter: brightness(1.2); transform: translateY(-1px); }
-        #render-container { position: absolute; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 1; }
-        #day-banner { position: absolute; top: 40%; left: 50%; transform: translate(-50%, -50%); font-size: 40px; font-weight: bold; color: #00ffcc; text-shadow: 0 0 20px rgba(0,255,204,0.8); opacity: 0; transition: opacity 1s; pointer-events: none; z-index: 20;}
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; user-select: none; -webkit-user-select: none; }
+        body, html { width: 100%; height: 100%; background: #030306; color: #fff; overflow: hidden; touch-action: none; }
         
-        /* Pantalla de inicio con enlace directo a Google */
-        #start-screen { position: absolute; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(3, 3, 6, 0.95); z-index: 100; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 20px; }
-        #start-screen h1 { color: #00ffcc; font-size: 32px; text-shadow: 0 0 10px rgba(0,255,204,0.5); }
-        #start-screen p { color: #a5b1c2; font-size: 14px; max-width: 400px; text-align: center; }
-        .main-btn { background: linear-gradient(135deg, #00b894, #00cec9); border: none; color: white; padding: 12px 24px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 16px; box-shadow: 0 4px 15px rgba(0,206,201,0.4); text-decoration: none; display: inline-block; }
+        #ui-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; display: flex; flex-direction: column; justify-content: space-between; padding: 10px; z-index: 10; }
+        .panel { background: rgba(10, 10, 20, 0.88); border: 1px solid rgba(0, 255, 204, 0.4); border-radius: 8px; padding: 6px 10px; backdrop-filter: blur(6px); pointer-events: auto; box-shadow: 0 4px 20px rgba(0,0,0,0.6); }
+        
+        .top-bar { display: flex; justify-content: space-between; align-items: flex-start; }
+        .stats-group { display: flex; flex-direction: column; gap: 3px; font-size: 11px; font-weight: bold; max-width: 340px;}
+        .stat-item span { color: #00ffcc; }
+        
+        #exp-bar-container { width: 100%; height: 5px; background: #151528; border-radius: 3px; margin-top: 2px; overflow: hidden; border: 1px solid rgba(0, 255, 204, 0.2); }
+        #exp-bar-fill { height: 100%; background: linear-gradient(90deg, #00cec9, #0984e3); width: 0%; transition: width 0.2s ease; }
+
+        .quick-inventory { display: flex; gap: 4px; margin-top: 4px; pointer-events: auto; flex-wrap: wrap; }
+        .inv-slot { width: 32px; height: 32px; background: #151528; border: 1px solid #444; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: bold; cursor: pointer; position: relative; transition: all 0.2s; color: #a5b1c2; }
+        .inv-slot.active { border-color: #00ffcc; background: rgba(0,255,204,0.15); color: #00ffcc; box-shadow: 0 0 10px rgba(0,255,204,0.4); }
+        .inv-key { position: absolute; top: 1px; left: 2px; font-size: 7px; color: #ffcc00; }
+
+        .bottom-bar { display: flex; flex-direction: column; gap: 8px; pointer-events: none; }
+        .chat-box { max-height: 70px; overflow-y: auto; font-size: 9px; color: #a5b1c2; display: flex; flex-direction: column; gap: 2px; }
+        
+        /* Controles táctiles virtuales para Celular */
+        #mobile-controls { display: none; justify-content: space-between; align-items: center; width: 100%; pointer-events: auto; padding-bottom: 5px; }
+        .joystick-base { width: 110px; height: 110px; background: rgba(255,255,255,0.08); border: 2px solid rgba(0, 255, 204, 0.4); border-radius: 50%; position: relative; touch-action: none; }
+        .joystick-knob { width: 50px; height: 50px; background: rgba(0, 255, 204, 0.6); border-radius: 50%; position: absolute; top: 30px; left: 30px; pointer-events: none; box-shadow: 0 0 10px #00ffcc; }
+        
+        .action-buttons-mob { display: flex; gap: 8px; flex-direction: column; }
+        .mob-btn { background: linear-gradient(135deg, #00b894, #00cec9); border: none; color: white; padding: 10px 16px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.4); text-align: center; }
+        .mob-btn:active { filter: brightness(1.3); transform: scale(0.96); }
+
+        #render-container { position: absolute; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 1; cursor: default; }
+        
+        #day-banner { 
+            position: absolute; top: 38%; left: 50%; transform: translate(-50%, -50%) scale(1); 
+            font-size: 32px; font-weight: bold; color: #00ffcc; 
+            text-shadow: 0 0 20px rgba(0,255,204,0.8); 
+            opacity: 0; transition: all 0.5s ease-in-out; pointer-events: none; z-index: 20; 
+            text-align: center; width: 100%;
+        }
+
+        #minimap-container {
+            width: 100px; height: 100px; background: rgba(5, 5, 12, 0.9);
+            border: 2px solid rgba(0, 255, 204, 0.6); border-radius: 50%;
+            overflow: hidden; position: relative; pointer-events: auto;
+            box-shadow: 0 0 15px rgba(0,255,204,0.3);
+        }
+        #minimap-canvas { width: 100%; height: 100%; display: block; }
+        
+        .overlay-screen { position: absolute; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(3, 3, 6, 0.92); z-index: 100; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 15px; pointer-events: auto; padding: 20px; text-align: center; }
+        .overlay-screen h1 { color: #00ffcc; font-size: 28px; text-shadow: 0 0 10px rgba(0,255,204,0.5); }
+        .overlay-screen h2 { color: #ffcc00; font-size: 22px; }
+        .overlay-screen p { color: #a5b1c2; font-size: 13px; max-width: 440px; line-height: 1.4; }
+        
+        #power-up-menu, #shop-menu, #class-select-menu { background: rgba(10, 10, 20, 0.96); border: 2px solid #00ffcc; border-radius: 12px; padding: 20px; display: none; flex-direction: column; align-items: center; gap: 12px; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 110; pointer-events: auto; box-shadow: 0 0 35px rgba(0,255,204,0.35); max-width: 750px; width: 95%; max-height: 85vh; }
+        .power-options-container { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; overflow-y: auto; max-height: 50vh; width: 100%; padding: 4px; }
+        
+        .power-option-card { background: #151528; border: 1px solid #444; border-radius: 8px; padding: 10px; width: 210px; text-align: center; cursor: pointer; transition: all 0.2s; display: flex; flex-direction: column; gap: 4px; position: relative; }
+        .power-option-card:hover:not(.disabled) { border-color: #00ffcc; background: #1a1a30; }
+        .power-option-card.disabled { opacity: 0.4; cursor: not-allowed; }
+        .power-title { font-weight: bold; color: #00ffcc; font-size: 12px; }
+        .power-desc { font-size: 10px; color: #fff; }
+        .power-price { font-size: 11px; color: #ffcc00; font-weight: bold; }
+        .power-level-tag { position: absolute; top: 4px; right: 6px; font-size: 8px; background: #0984e3; color: white; padding: 1px 4px; border-radius: 3px; }
+
+        .main-btn { background: linear-gradient(135deg, #00b894, #00cec9); border: none; color: white; padding: 12px 24px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 15px; }
         .main-btn:hover { filter: brightness(1.2); }
     </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 </head>
 <body>
 
-    <!-- Pantalla de Bienvenida con acceso directo a Google -->
-    <div id="start-screen">
+    <div id="start-screen" class="overlay-screen">
         <h1>ECOS DE AETHELGARD</h1>
-        <p>Supervivencia Extrema (200+ Días). Protege el núcleo central de las hordas progresivas.</p>
-        <div style="display: flex; gap: 15px;">
-            <button class="main-btn" onclick="startGame()">Jugar Aquí</button>
-            <a class="main-btn" style="background: linear-gradient(135deg, #0984e3, #74b9ff);" href="https://www.google.com" target="_blank">Abrir Google Directo</a>
-        </div>
+        <p><b>Versión Adaptada PC y Móvil</b> con Clases, Elementos (Choque Térmico) y Clima Dinámico.</p>
+        <p><b>PC:</b> WASD + Clic / <b>Móvil:</b> Joystick virtual izquierdo + Botones de ataque y especial derechos.</p>
+        <button class="main-btn" onclick="startGame()">Comenzar Campaña</button>
+    </div>
+
+    <div id="pause-screen" class="overlay-screen" style="display: none;">
+        <h2>JUEGO EN PAUSA</h2>
+        <button class="main-btn" onclick="togglePause()">Reanudar</button>
+    </div>
+
+    <div id="class-select-menu">
+        <h2>¡ELIGE TU CLASE!</h2>
+        <p>Alcanzaste el Nivel 5. Selecciona tu especialización:</p>
+        <div class="power-options-container" id="class-options-list"></div>
+    </div>
+
+    <div id="power-up-menu">
+        <h2>¡SUBISTE DE NIVEL!</h2>
+        <p>Elige una habilidad pasiva:</p>
+        <div class="power-options-container" id="power-options-list"></div>
+    </div>
+
+    <div id="shop-menu">
+        <h2>ARMERÍA Y TIENDA TÁCTICA</h2>
+        <p>Mejora tu equipo antes del siguiente día:</p>
+        <div class="power-options-container" id="shop-options-list"></div>
+        <button class="main-btn" style="padding: 10px 20px; font-size: 14px; margin-top: 4px;" onclick="closeShopAndStart()">Continuar Día</button>
     </div>
 
     <div id="ui-layer">
         <div class="top-bar">
             <div class="panel stats-group">
-                <div class="stat-item">DEFENSOR: <span>Guardián_01</span></div>
-                <div class="stat-item">HP: <span id="ui-hp">100/100</span></div>
+                <div style="display:flex; justify-content:space-between; width: 100%;">
+                    <div>CLASE: <span id="ui-class-name">Guardián</span></div>
+                    <div>NV: <span id="ui-level">1</span></div>
+                </div>
+                <div id="exp-bar-container"><div id="exp-bar-fill"></div></div>
+                <div style="display: flex; gap: 10px; margin-top: 2px;">
+                    <div class="stat-item">HP: <span id="ui-hp">100/100</span></div>
+                    <div class="stat-item">STA: <span id="ui-stamina">100/100</span></div>
+                </div>
+                <div style="display: flex; gap: 10px;">
+                    <div class="stat-item" style="color: #9b59b6;">MP: <span id="ui-mana" style="color: #9b59b6;">100/100</span></div>
+                    <div class="stat-item" style="color: #ffcc00;">CRED: <span id="ui-credits" style="color: #ffcc00;">0</span></div>
+                </div>
                 <div class="stat-item">NÚCLEO HP: <span id="ui-core-hp">500/500</span></div>
-                <div class="stat-item">DÍA: <span id="ui-day">1</span> / 200+</div>
+                <div class="stat-item">ARMA: <span id="ui-weapon-name" style="color: #ffcc00;">Espada Estándar</span></div>
+                <div class="quick-inventory" id="quick-inventory-bar"></div>
+                <div class="stat-item" style="margin-top: 2px;">DÍA: <span id="ui-day">1</span> | CLIMA: <span id="ui-weather" style="color: #00ffcc;">Despejado</span></div>
                 <div class="stat-item">RESTANTES: <span id="ui-mob-count">0</span></div>
             </div>
-            <div class="panel">
-                <button class="btn" style="background: #d63031;" onclick="triggerGameOver()">Reiniciar Partida</button>
+            
+            <div style="display: flex; gap: 8px; align-items: flex-start;">
+                <div id="minimap-container">
+                    <canvas id="minimap-canvas" width="100" height="100"></canvas>
+                </div>
+                <div class="panel" style="padding: 4px;">
+                    <button class="mob-btn" style="background: #d63031; padding: 6px 10px; font-size: 10px;" onclick="togglePause()">Pausa</button>
+                </div>
             </div>
         </div>
 
         <div class="bottom-bar">
-            <div class="panel chat-box">
-                <div class="chat-messages" id="chat-logs">
-                    <div>[Sistema]: Dificultad configurada a "Supervivencia Extrema". El crecimiento de enemigos ahora es proporcional.</div>
-                    <div>[Consejo]: El núcleo recupera un poco de energía cada día superado. ¡Prepárate!</div>
-                </div>
+            <div class="panel chat-box" id="chat-logs">
+                <div>[Sistema]: ¡Listo para jugar en PC y Celular!</div>
             </div>
-            <div class="panel action-bar">
-                <div style="font-size: 12px; font-weight: bold; color: #00ffcc;">DEFENSA DE ZONA</div>
-                <div style="display: flex; gap: 8px;">
-                    <button class="btn" style="flex:1;" onclick="playerAttack3D()">[1] Espadazo Rápido</button>
-                    <button class="btn" style="flex:1; background: #6c5ce7;" onclick="playerSuperPulse()">[2] Onda Expansiva</button>
+            
+            <!-- Controles exclusivos para Celular -->
+            <div id="mobile-controls">
+                <div class="joystick-base" id="joystick-base">
+                    <div class="joystick-knob" id="joystick-knob"></div>
+                </div>
+                <div class="action-buttons-mob">
+                    <button class="mob-btn" onclick="mobileAttackAction()">⚔️ Atacar / Usar</button>
+                    <button class="mob-btn" style="background: #6c5ce7;" onclick="playerSuperPulse()">✨ Nova (40 MP)</button>
                 </div>
             </div>
         </div>
@@ -107,282 +192,520 @@
         grid.position.y = 0.02;
         scene.add(grid);
 
-        function generateRandomScenery() {
-            const geometries = [
-                new THREE.ConeGeometry(1.5, 5, 4),
-                new THREE.DodecahedronGeometry(2),
-                new THREE.BoxGeometry(2, 4, 2)
-            ];
-            const colors = [0x00cec9, 0x6c5ce7, 0xd63031, 0xfdcb6e, 0xe84393];
+        function generateDetailedScenery() {
+            for (let i = 0; i < 40; i++) {
+                const treeGroup = new THREE.Group();
+                const trunkMat = new THREE.MeshStandardMaterial({ color: 0x3d2817, roughness: 0.8 });
+                const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.6, 0.8, 4, 6), trunkMat);
+                trunk.position.y = 2;
+                treeGroup.add(trunk);
 
-            for (let i = 0; i < 60; i++) {
-                const geo = geometries[Math.floor(Math.random() * geometries.length)];
-                const color = colors[Math.floor(Math.random() * colors.length)];
-                const mat = new THREE.MeshStandardMaterial({ color: color, roughness: 0.3, metalness: 0.5 });
-                const mesh = new THREE.Mesh(geo, mat);
+                const leavesMat = new THREE.MeshStandardMaterial({ color: 0x0a5c36, roughness: 0.6, emissive: 0x022d17, emissiveIntensity: 0.2 });
+                const leaves = new THREE.Mesh(new THREE.DodecahedronGeometry(2.5), leavesMat);
+                leaves.position.y = 4.5;
+                treeGroup.add(leaves);
 
-                let posX = (Math.random() - 0.5) * 320;
-                let posZ = (Math.random() - 0.5) * 320;
-                if (Math.abs(posX) < 30) posX += 40 * Math.sign(posX);
-                if (Math.abs(posZ) < 30) posZ += 40 * Math.sign(posZ);
+                let posX = (Math.random() - 0.5) * 340;
+                let posZ = (Math.random() - 0.5) * 340;
+                if (Math.abs(posX) < 40) posX += 60 * Math.sign(posX);
+                if (Math.abs(posZ) < 40) posZ += 60 * Math.sign(posZ);
 
-                mesh.position.set(posX, 2, posZ);
-                mesh.rotation.set(Math.random() * Math.PI, Math.random() * Math.PI, 0);
-                mesh.castShadow = true;
-                scene.add(mesh);
+                treeGroup.position.set(posX, 0, posZ);
+                scene.add(treeGroup);
             }
         }
-        generateRandomScenery();
+        generateDetailedScenery();
 
         const coreGroup = new THREE.Group();
-        const coreBase = new THREE.Mesh(
-            new THREE.CylinderGeometry(4, 5, 1.5, 8),
-            new THREE.MeshStandardMaterial({ color: 0x0984e3, roughness: 0.2, metalness: 0.8 })
-        );
-        coreBase.position.y = 0.75;
-        coreGroup.add(coreBase);
+        const coreBase = new THREE.Mesh(new THREE.CylinderGeometry(4, 5, 1.5, 8), new THREE.MeshStandardMaterial({ color: 0x0984e3, roughness: 0.2, metalness: 0.8 }));
+        coreBase.position.y = 0.75; coreGroup.add(coreBase);
+        const coreCrystal = new THREE.Mesh(new THREE.OctahedronGeometry(2.5), new THREE.MeshStandardMaterial({ color: 0x00ffcc, emissive: 0x00ffcc, emissiveIntensity: 0.8, roughness: 0.1, wireframe: true }));
+        coreCrystal.position.y = 3.5; coreGroup.add(coreCrystal);
+        coreGroup.position.set(0, 0, 0); scene.add(coreGroup);
 
-        const coreCrystal = new THREE.Mesh(
-            new THREE.OctahedronGeometry(2.5),
-            new THREE.MeshStandardMaterial({ color: 0x00ffcc, emissive: 0x00ffcc, emissiveIntensity: 0.8, roughness: 0.1, wireframe: true })
-        );
-        coreCrystal.position.y = 3.5;
-        coreGroup.add(coreCrystal);
-        coreGroup.position.set(0, 0, 0);
-        scene.add(coreGroup);
+        const zone = { mesh: coreGroup, crystal: coreCrystal, hp: 500, maxHp: 500 };
 
-        const zone = {
-            mesh: coreGroup,
-            crystal: coreCrystal,
-            hp: 500,
-            maxHp: 500
-        };
-
-        function createEntityModel(primaryColor, isEnemy = false) {
+        function createPlayerModel() {
             const group = new THREE.Group();
-            const mat = new THREE.MeshStandardMaterial({ color: primaryColor, roughness: 0.3, metalness: 0.3 });
+            const mat = new THREE.MeshStandardMaterial({ color: 0x00ffcc, roughness: 0.3, metalness: 0.3 });
+            const body = new THREE.Mesh(new THREE.BoxGeometry(0.7, 1.0, 0.35), mat);
+            body.position.y = 1.1; group.add(body);
+            const head = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.4, 0.4), mat);
+            head.position.y = 1.8; group.add(head);
+            const legGeo = new THREE.BoxGeometry(0.22, 0.8, 0.25);
+            const leftLeg = new THREE.Mesh(legGeo, mat); leftLeg.position.set(0.18, 0.4, 0); group.add(leftLeg);
+            const rightLeg = new THREE.Mesh(legGeo, mat); rightLeg.position.set(-0.18, 0.4, 0); group.add(rightLeg);
+            const armGeo = new THREE.BoxGeometry(0.2, 0.8, 0.22);
+            const leftArm = new THREE.Mesh(armGeo, mat); leftArm.position.set(0.48, 1.1, 0); group.add(leftArm);
+            const rightArm = new THREE.Mesh(armGeo, mat); rightArm.position.set(-0.48, 1.1, 0); group.add(rightArm);
             
-            const body = new THREE.Mesh(new THREE.BoxGeometry(0.8, 1.8, 0.4), mat);
-            body.position.y = 0.9;
-            group.add(body);
-            
-            const head = new THREE.Mesh(new THREE.OctahedronGeometry(0.35), mat);
-            head.position.y = 2.1;
-            group.add(head);
+            const weaponGroup = new THREE.Group();
+            const handle = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 0.4, 8), new THREE.MeshStandardMaterial({ color: 0x552512, roughness: 0.6 }));
+            handle.position.set(0, 0.2, 0); weaponGroup.add(handle);
+            const guard = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.08, 0.12), new THREE.MeshStandardMaterial({ color: 0xf1c40f, metalness: 0.8, roughness: 0.2 }));
+            guard.position.set(0, 0.4, 0); weaponGroup.add(guard);
+            const blade = new THREE.Mesh(new THREE.BoxGeometry(0.12, 1.5, 0.04), new THREE.MeshStandardMaterial({ color: 0xffffff, emissive: 0x00ffff, emissiveIntensity: 0.6, metalness: 0.9, roughness: 0.1 }));
+            blade.position.set(0, 1.15, 0); weaponGroup.add(blade);
+            weaponGroup.position.set(0.48, 0.7, 0.2); weaponGroup.rotation.x = -Math.PI / 6; group.add(weaponGroup);
 
-            return group;
+            return { group, leftLeg, rightLeg, leftArm, rightArm, weapon: weaponGroup };
         }
 
-        const playerGroup = createEntityModel(0x00ffcc);
-        const swordMat = new THREE.MeshStandardMaterial({ color: 0xffffff, emissive: 0x00ffff, emissiveIntensity: 0.5 });
-        const swordMesh = new THREE.Mesh(new THREE.BoxGeometry(0.1, 1.6, 0.05), swordMat);
-        swordMesh.position.set(0.6, 1.2, 0.4);
-        swordMesh.rotation.x = Math.PI / 4;
-        playerGroup.add(swordMesh);
+        function createVortariModel() {
+            const group = new THREE.Group();
+            const mat = new THREE.MeshStandardMaterial({ color: 0xe17055, roughness: 0.4, metalness: 0.3 });
+            const body = new THREE.Mesh(new THREE.BoxGeometry(0.75, 1.1, 0.4), mat);
+            body.position.y = 1.1; group.add(body);
+            const head = new THREE.Mesh(new THREE.BoxGeometry(0.45, 0.45, 0.45), mat);
+            head.position.y = 1.85; group.add(head);
+            const legGeo = new THREE.BoxGeometry(0.22, 0.8, 0.25);
+            const lLeg = new THREE.Mesh(legGeo, mat); lLeg.position.set(0.2, 0.4, 0); group.add(lLeg);
+            const rLeg = new THREE.Mesh(legGeo, mat); rLeg.position.set(-0.2, 0.4, 0); group.add(rLeg);
+            const armGeo = new THREE.BoxGeometry(0.2, 0.8, 0.2);
+            const lArm = new THREE.Mesh(armGeo, mat); lArm.position.set(0.52, 1.1, 0); group.add(lArm);
+            const rArm = new THREE.Mesh(armGeo, mat); rArm.position.set(-0.52, 1.1, 0); group.add(rArm);
+            return { group, leftLeg: lLeg, rightLeg: rLeg, leftArm: lArm, rightArm: rArm };
+        }
 
+        function createXylarModel() {
+            const group = new THREE.Group();
+            const mat = new THREE.MeshStandardMaterial({ color: 0xd63031, roughness: 0.2, metalness: 0.6, emissive: 0x3a0000 });
+            const body = new THREE.Mesh(new THREE.ConeGeometry(0.45, 1.3, 5), mat);
+            body.position.y = 1.1; group.add(body);
+            const head = new THREE.Mesh(new THREE.OctahedronGeometry(0.3), mat);
+            head.position.y = 1.9; group.add(head);
+            const legGeo = new THREE.CylinderGeometry(0.08, 0.12, 0.9, 5);
+            const lLeg = new THREE.Mesh(legGeo, mat); lLeg.position.set(0.18, 0.45, 0); group.add(lLeg);
+            const rLeg = new THREE.Mesh(legGeo, mat); rLeg.position.set(-0.18, 0.45, 0); group.add(rLeg);
+            const bladeGeo = new THREE.BoxGeometry(0.08, 1.1, 0.3);
+            const lArm = new THREE.Mesh(bladeGeo, mat); lArm.position.set(0.45, 1.2, 0); group.add(lArm);
+            const rArm = new THREE.Mesh(bladeGeo, mat); rArm.position.set(-0.45, 1.2, 0); group.add(rArm);
+            return { group, leftLeg: lLeg, rightLeg: rLeg, leftArm: lArm, rightArm: rArm };
+        }
+
+        function createGorgathModel() {
+            const group = new THREE.Group();
+            const mat = new THREE.MeshStandardMaterial({ color: 0x636e72, roughness: 0.7, metalness: 0.4 });
+            const body = new THREE.Mesh(new THREE.BoxGeometry(1.2, 1.3, 0.7), mat);
+            body.position.y = 1.15; group.add(body);
+            const head = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.5, 0.6), mat);
+            head.position.y = 1.95; group.add(head);
+            const shoulderMat = new THREE.MeshStandardMaterial({ color: 0x2d3436, roughness: 0.5 });
+            const lSh = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.4, 0.5), shoulderMat); lSh.position.set(0.75, 1.4, 0); group.add(lSh);
+            const rSh = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.4, 0.5), shoulderMat); rSh.position.set(-0.75, 1.4, 0); group.add(rSh);
+            const legGeo = new THREE.BoxGeometry(0.35, 0.8, 0.35);
+            const lLeg = new THREE.Mesh(legGeo, mat); lLeg.position.set(0.3, 0.4, 0); group.add(lLeg);
+            const rLeg = new THREE.Mesh(legGeo, mat); rLeg.position.set(-0.3, 0.4, 0); group.add(rLeg);
+            const lArm = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.8, 0.3), mat); lArm.position.set(0.8, 1.0, 0); group.add(lArm);
+            const rArm = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.8, 0.3), mat); rArm.position.set(-0.8, 1.0, 0); group.add(rArm);
+            return { group, leftLeg: lLeg, rightLeg: rLeg, leftArm: lArm, rightArm: rArm };
+        }
+
+        function createSylphModel() {
+            const group = new THREE.Group();
+            const mat = new THREE.MeshStandardMaterial({ color: 0x9b59b6, roughness: 0.2, transparent: true, opacity: 0.85, emissive: 0x4a235a });
+            const body = new THREE.Mesh(new THREE.OctahedronGeometry(0.55), mat);
+            body.position.y = 1.3; group.add(body);
+            const head = new THREE.Mesh(new THREE.TetrahedronGeometry(0.35), mat);
+            head.position.y = 2.0; group.add(head);
+            const ringGeo = new THREE.TorusGeometry(0.8, 0.04, 8, 24);
+            const ring = new THREE.Mesh(ringGeo, mat);
+            ring.rotation.x = Math.PI / 2;
+            ring.position.y = 1.3;
+            group.add(ring);
+            const lArm = new THREE.Mesh(new THREE.SphereGeometry(0.18, 6, 6), mat); lArm.position.set(0.6, 1.3, 0); group.add(lArm);
+            const rArm = new THREE.Mesh(new THREE.SphereGeometry(0.18, 6, 6), mat); rArm.position.set(-0.6, 1.3, 0); group.add(rArm);
+            return { group, leftLeg: lArm, rightLeg: rArm, leftArm: lArm, rightArm: rArm, ring };
+        }
+
+        const playerEntity = createPlayerModel();
+        const playerGroup = playerEntity.group;
         playerGroup.position.set(8, 0, 8);
         scene.add(playerGroup);
 
+        let cameraDistance = 24;
+        let cameraHeight = 20;
+        let cameraAngleX = 0;
+        let isRightMouseDown = false;
+        let prevMouseX = 0;
+
+        window.addEventListener('mousedown', e => {
+            if (e.button === 2) { isRightMouseDown = true; prevMouseX = e.clientX; }
+        });
+        window.addEventListener('mouseup', e => { if (e.button === 2) isRightMouseDown = false; });
+        window.addEventListener('contextmenu', e => e.preventDefault());
+        window.addEventListener('mousemove', e => {
+            if (isRightMouseDown) {
+                cameraAngleX -= (e.clientX - prevMouseX) * 0.008;
+                prevMouseX = e.clientX;
+            }
+        });
+        window.addEventListener('wheel', e => {
+            cameraDistance = Math.max(10, Math.min(50, cameraDistance + e.deltaY * 0.03));
+            cameraHeight = Math.max(8, cameraDistance * 0.85);
+        }, { passive: true });
+
         const player = {
-            mesh: playerGroup,
-            speed: 0.25,
-            hp: 100,
-            maxHp: 100,
-            attackRange: 4.5,
-            damage: 60
+            entity: playerEntity, mesh: playerGroup,
+            walkSpeed: 0.22, runSpeed: 0.42,
+            hp: 100, maxHp: 100, stamina: 100, maxStamina: 100,
+            mana: 100, maxMana: 100, attackRange: 4.5, damage: 60,
+            credits: 0, level: 1, exp: 0, nextLevelExp: 100,
+            staminaRegen: 0.4, manaRegen: 0.6, costReduction: 1.0,
+            vampirism: 0, critChance: 0.05, criticalMultiplier: 2.0,
+            chosenClass: null, className: 'Guardián',
+            inventory: [
+                { id: 'espada_estandar', name: 'Espada Estándar', type: 'melee', element: 'physical', isMagical: false, damageMult: 1.0, range: 4.5, color: 0xffffff, icon: '⚔️' }
+            ],
+            activeWeaponIndex: 0
         };
 
-        const keys = {};
-        window.addEventListener('keydown', e => keys[e.code] = true);
-        window.addEventListener('keyup', e => keys[e.code] = false);
+        const playerSkillsLevels = {};
+        const availablePowers = [
+            { id: 'dmg', title: 'Filo Afilado', baseDesc: '+20% Daño de Ataque.', apply: () => { player.damage *= 1.20; } },
+            { id: 'hp', title: 'Coraza Etérea', baseDesc: '+35 HP Máximo.', apply: () => { player.maxHp += 35; player.hp = player.maxHp; } },
+            { id: 'speed', title: 'Botas Ligeras', baseDesc: '+12% Velocidad.', apply: () => { player.walkSpeed *= 1.12; player.runSpeed *= 1.12; } },
+            { id: 'range', title: 'Alcance Astral', baseDesc: '+20% Rango.', apply: () => { player.attackRange *= 1.20; } },
+            { id: 'crit', title: 'Ojo de Halcón', baseDesc: '+8% Crítico.', apply: () => { player.critChance += 0.08; } },
+            { id: 'vamp_boost', title: 'Vampirismo', baseDesc: '+8 de robo de vida.', apply: () => { player.vampirism += 8; } }
+        ];
 
+        const shopCatalog = [
+            { id: 'wpn_plasma', title: 'Espada Plasma', desc: 'Física de plasma potente.', price: 110, type: 'weapon', weaponData: { name: 'Espada Plasma', type: 'melee', element: 'physical', isMagical: false, damageMult: 1.4, range: 5.0, color: 0xff00ff, icon: '⚡' } },
+            { id: 'wpn_frost', title: 'Espada Escarcha', desc: 'Congela (Prepara Choque Térmico).', price: 190, type: 'weapon', weaponData: { name: 'Espada Escarcha', type: 'melee', element: 'ice', isMagical: false, damageMult: 1.6, range: 4.8, color: 0x00cec9, icon: '❄️' } },
+            { id: 'wpn_flame', title: 'Espada Ígnea', desc: 'Fuego abrasador.', price: 230, type: 'weapon', weaponData: { name: 'Espada Ígnea', type: 'melee', element: 'fire', isMagical: false, damageMult: 1.9, range: 4.8, color: 0xe17055, icon: '🔥' } },
+            { id: 'heal_core', title: 'Reparar Núcleo', desc: '+180 HP al núcleo.', price: 65, type: 'item', apply: () => { zone.hp = Math.min(zone.maxHp, zone.hp + 180); } },
+            { id: 'heal_player', title: 'Nanobots Médicos', desc: 'Restaura vida del personaje.', price: 55, type: 'item', apply: () => { player.hp = player.maxHp; } }
+        ];
+
+        function updateQuickInventoryUI() {
+            const bar = document.getElementById('quick-inventory-bar');
+            bar.innerHTML = '';
+            player.inventory.forEach((item, index) => {
+                const slot = document.createElement('div');
+                slot.className = `inv-slot ${index === player.activeWeaponIndex ? 'active' : ''}`;
+                slot.innerHTML = `<span class="inv-key">${index + 1}</span>${item.icon || '⚔️'}`;
+                slot.onclick = () => selectWeaponByIndex(index);
+                bar.appendChild(slot);
+            });
+        }
+
+        function selectWeaponByIndex(index) {
+            if (index < 0 || index >= player.inventory.length) return;
+            player.activeWeaponIndex = index;
+            const wpn = player.inventory[index];
+            player.attackRange = wpn.range;
+            updatePlayerWeaponMesh(wpn.color);
+            addLog(`[Inventario]: ${wpn.name} (${wpn.element.toUpperCase()})`);
+        }
+
+        function updatePlayerWeaponMesh(colorHex) {
+            if (!player.entity.weapon) return;
+            player.entity.weapon.children.forEach(child => {
+                if (child.geometry.type === 'BoxGeometry' && child.position.y > 1.0) {
+                    child.material.color.setHex(colorHex);
+                    child.material.emissive.setHex(colorHex);
+                }
+            });
+        }
+
+        const keys = {};
+        let isPaused = false;
+        let isLevelingUp = false;
+        let isShopping = false;
+        let isClassSelecting = false;
+        let gameStarted = false;
+        let animationTime = 0;
+        let isAttackingAnim = false;
+        let attackAnimProgress = 0;
+        let currentWeather = 'Despejado';
         let currentDay = 1;
         let mobs = [];
-        let isTransitioning = false;
-        let gameStarted = false;
+
+        const raceStacks = { vortari: 0, xylar: 0, gorgath: 0, sylph: 0 };
+
+        // Detección y manejo de controles táctiles (Joystick Virtual)
+        let joystickActive = false;
+        let joystickMoveX = 0;
+        let joystickMoveZ = 0;
+        const joystickBase = document.getElementById('joystick-base');
+        const joystickKnob = document.getElementById('joystick-knob');
+        let joyCenter = { x: 0, y: 0 };
+
+        joystickBase.addEventListener('touchstart', e => {
+            joystickActive = true;
+            const rect = joystickBase.getBoundingClientRect();
+            joyCenter = { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
+            handleJoystickMove(e.touches[0]);
+        });
+        window.addEventListener('touchmove', e => {
+            if (!joystickActive) return;
+            for (let i = 0; i < e.touches.length; i++) {
+                handleJoystickMove(e.touches[i]);
+            }
+        });
+        window.addEventListener('touchend', e => {
+            if (joystickActive) {
+                joystickActive = false;
+                joystickMoveX = 0;
+                joystickMoveZ = 0;
+                joystickKnob.style.transform = `translate(0px, 0px)`;
+            }
+        });
+
+        function handleJoystickMove(touch) {
+            const dx = touch.clientX - joyCenter.x;
+            const dy = touch.clientY - joyCenter.y;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            const maxRadius = 40;
+            const angle = Math.atan2(dy, dx);
+
+            const clampedDist = Math.min(dist, maxRadius);
+            const knobX = Math.cos(angle) * clampedDist;
+            const knobY = Math.sin(angle) * clampedDist;
+
+            joystickKnob.style.transform = `translate(${knobX}px, ${knobY}px)`;
+            joystickMoveX = knobX / maxRadius;
+            joystickMoveZ = knobY / maxRadius;
+        }
+
+        window.addEventListener('keydown', e => {
+            keys[e.code] = true;
+            if (e.code === 'KeyP' && gameStarted) togglePause();
+            if (gameStarted && ['Digit1', 'Digit2', 'Digit3', 'Digit4'].includes(e.code)) {
+                selectWeaponByIndex(parseInt(e.code.replace('Digit', '')) - 1);
+            }
+        });
+        window.addEventListener('keyup', e => keys[e.code] = false);
+
+        window.addEventListener('pointerdown', e => {
+            if (!gameStarted || isPaused || isLevelingUp || isShopping || isClassSelecting || e.button !== 0) return;
+            if (e.target.tagName !== 'CANVAS' && e.target !== container) return;
+            executeMeleeAttack();
+        });
+
+        function mobileAttackAction() {
+            if (!gameStarted || isPaused || isLevelingUp || isShopping || isClassSelecting) return;
+            executeMeleeAttack();
+        }
+
+        function togglePause() {
+            isPaused = !isPaused;
+            document.getElementById('pause-screen').style.display = isPaused ? 'flex' : 'none';
+        }
 
         function startGame() {
             document.getElementById('start-screen').style.display = 'none';
+            // Mostrar controles móviles si es dispositivo táctil o pantalla pequeña
+            if ('ontouchstart' in window || navigator.maxTouchPoints > 0) {
+                document.getElementById('mobile-controls').style.display = 'flex';
+            }
             gameStarted = true;
+            updateQuickInventoryUI();
             startNewDay(currentDay);
             animate();
         }
 
         function getMobCountForDay(day) {
-            return Math.floor(5 + (day * 3));
+            return Math.floor(6 + (day * 3.2));
         }
 
-        function showDayBanner(day) {
+        function showDayBanner(text, duration = 2000) {
             const banner = document.getElementById('day-banner');
-            banner.textContent = `DÍA ${day}`;
+            banner.innerHTML = text;
             banner.style.opacity = 1;
-            setTimeout(() => { banner.style.opacity = 0; }, 2000);
+            setTimeout(() => { banner.style.opacity = 0; }, duration);
         }
 
-        function startNewDay(dayNumber) {
-            const mobCount = getMobCountForDay(dayNumber);
-            const enemyColors = [0xe17055, 0xd63031, 0xe84393, 0xa29bfe];
+        function addExp(amount) {
+            player.exp += amount;
+            if (player.exp >= player.nextLevelExp) {
+                player.exp -= player.nextLevelExp;
+                player.nextLevelExp = Math.floor(player.nextLevelExp * 1.35);
+                player.level++;
+                if (player.level === 5 && !player.chosenClass) {
+                    triggerClassSelection();
+                } else {
+                    triggerLevelUp();
+                }
+            }
+            updateUIStats();
+        }
 
+        function triggerClassSelection() {
+            isClassSelecting = true;
+            const containerList = document.getElementById('class-options-list');
+            containerList.innerHTML = '';
+            const classesData = [
+                { id: 'berserker', title: 'Berserker', desc: '+50% Daño físico y +15 de vampirismo.', apply: () => { player.damage *= 1.5; player.vampirism += 15; player.className = 'Berserker'; } },
+                { id: 'archimago', title: 'Archimago', desc: '-40% Coste maná y +80 Maná.', apply: () => { player.costReduction *= 0.6; player.maxMana += 80; player.mana = player.maxMana; player.className = 'Archimago'; } },
+                { id: 'tactician', title: 'Ingeniero', desc: '+50% Créditos y Núcleo reparado.', apply: () => { zone.hp = zone.maxHp; player.className = 'Ingeniero'; } }
+            ];
+            classesData.forEach(cls => {
+                const card = document.createElement('div');
+                card.className = 'power-option-card';
+                card.innerHTML = `<div class="power-title">${cls.title}</div><div class="power-desc">${cls.desc}</div>`;
+                card.onclick = () => {
+                    cls.apply();
+                    player.chosenClass = cls.id;
+                    document.getElementById('ui-class-name').textContent = player.className;
+                    document.getElementById('class-select-menu').style.display = 'none';
+                    isClassSelecting = false;
+                    triggerLevelUp();
+                };
+                containerList.appendChild(card);
+            });
+            document.getElementById('class-select-menu').style.display = 'flex';
+        }
+
+        function triggerLevelUp() {
+            isLevelingUp = true;
+            document.getElementById('ui-level').textContent = player.level;
+            const optionsList = document.getElementById('power-options-list');
+            optionsList.innerHTML = '';
+            let shuffled = [...availablePowers].sort(() => 0.5 - Math.random()).slice(0, 3);
+            shuffled.forEach(power => {
+                const card = document.createElement('div');
+                card.className = 'power-option-card';
+                card.innerHTML = `<div class="power-title">${power.title}</div><div class="power-desc">${power.baseDesc}</div>`;
+                card.onclick = () => {
+                    power.apply();
+                    document.getElementById('power-up-menu').style.display = 'none';
+                    isLevelingUp = false;
+                };
+                optionsList.appendChild(card);
+            });
+            document.getElementById('power-up-menu').style.display = 'flex';
+        }
+
+        function triggerShop() {
+            isShopping = true;
+            const shopContainer = document.getElementById('shop-options-list');
+            shopContainer.innerHTML = '';
+            shopCatalog.forEach(item => {
+                let alreadyHas = item.type === 'weapon' && player.inventory.some(inv => inv.name === item.weaponData.name);
+                let canAfford = player.credits >= item.price && !alreadyHas;
+                const card = document.createElement('div');
+                card.className = `power-option-card ${canAfford ? '' : 'disabled'}`;
+                card.innerHTML = `<div class="power-title">${item.title}</div><div class="power-desc">${alreadyHas ? 'Adquirido' : item.desc}</div><div class="power-price">${alreadyHas ? 'LISTO' : item.price + ' Cred'}</div>`;
+                if (canAfford) {
+                    card.onclick = () => {
+                        player.credits -= item.price;
+                        if (item.type === 'weapon') {
+                            player.inventory.push(item.weaponData);
+                            updateQuickInventoryUI();
+                        } else { item.apply(); }
+                        triggerShop();
+                    };
+                }
+                shopContainer.appendChild(card);
+            });
+            document.getElementById('shop-menu').style.display = 'flex';
+        }
+
+        function closeShopAndStart() {
+            document.getElementById('shop-menu').style.display = 'none';
+            isShopping = false;
+            currentDay++;
+            Object.keys(raceStacks).forEach(r => raceStacks[r]++);
+            currentWeather = Math.random() < 0.35 ? 'Tormenta de Vacío' : 'Despejado';
+            document.getElementById('ui-weather').textContent = currentWeather;
+            startNewDay(currentDay);
+        }
+
+        const enemyRaces = [
+            { id: 'vortari', name: 'Vortari', creator: createVortariModel, speedMult: 1.0, hpMult: 1.0, damageMult: 1.0, immunities: [] },
+            { id: 'xylar', name: 'Xylar', creator: createXylarModel, speedMult: 1.25, hpMult: 0.8, damageMult: 1.2, immunities: ['magic'] },
+            { id: 'gorgath', name: 'Gorgath', creator: createGorgathModel, speedMult: 0.65, hpMult: 2.2, damageMult: 1.6, immunities: [] },
+            { id: 'sylph', name: 'Sylph', creator: createSylphModel, speedMult: 1.4, hpMult: 0.6, damageMult: 0.9, immunities: ['physical'] }
+        ];
+
+        function createMobNameTag() {
+            const canvas = document.createElement('canvas');
+            canvas.width = 256; canvas.height = 96;
+            const tex = new THREE.CanvasTexture(canvas);
+            const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, transparent: true }));
+            sprite.scale.set(2.5, 1.0, 1);
+            return { sprite, canvas, tex };
+        }
+
+        function updateMobNameTag(mob) {
+            const ctx = mob.tagData.canvas.getContext('2d');
+            ctx.clearRect(0, 0, 256, 96);
+            ctx.fillStyle = 'rgba(5, 5, 12, 0.85)';
+            ctx.fillRect(8, 8, 240, 80);
+            ctx.fillStyle = mob.isFrozen ? '#00cec9' : (mob.isBurning ? '#e17055' : '#fff');
+            ctx.font = 'bold 16px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText(mob.race.name.toUpperCase(), 128, 32);
+            ctx.fillStyle = '#2ecc71';
+            ctx.fillRect(28, 48, 200 * Math.max(0, mob.hp / mob.maxHp), 16);
+            mob.tagData.tex.needsUpdate = true;
+        }
+
+        function startNewDay(day) {
+            showDayBanner(`DÍA ${day} - ${currentWeather}`);
+            const mobCount = getMobCountForDay(day);
             for (let i = 0; i < mobCount; i++) {
-                const primaryCol = enemyColors[Math.floor(Math.random() * enemyColors.length)];
-                const enemyGroup = createEntityModel(primaryCol, true);
-
+                const race = enemyRaces[Math.floor(Math.random() * enemyRaces.length)];
+                const mobEntity = race.creator();
                 const angle = Math.random() * Math.PI * 2;
-                const distance = 45 + Math.random() * 50; 
-                enemyGroup.position.set(
-                    Math.cos(angle) * distance,
-                    0,
-                    Math.sin(angle) * distance
-                );
+                const dist = 70 + Math.random() * 50;
+                mobEntity.group.position.set(Math.cos(angle) * dist, 0, Math.sin(angle) * dist);
+                scene.add(mobEntity.group);
 
-                scene.add(enemyGroup);
+                const stackMult = Math.pow(1.20, raceStacks[race.id] || 0);
+                const finalHp = 45 * race.hpMult * stackMult;
+                const tagData = createMobNameTag();
+                tagData.sprite.position.set(0, 2.5, 0);
+                mobEntity.group.add(tagData.sprite);
 
-                mobs.push({
-                    group: enemyGroup,
-                    hp: 40 + (dayNumber * 0.5),
-                    maxHp: 40,
-                    speed: 0.05 + (dayNumber * 0.0005),
-                    damage: 0.5 + (dayNumber * 0.02)
-                });
+                const mobObj = {
+                    entity: mobEntity, mesh: mobEntity.group,
+                    hp: finalHp, maxHp: finalHp,
+                    speed: (0.07 + Math.random() * 0.03) * race.speedMult,
+                    damage: (10 + (day * 1.5)) * race.damageMult * stackMult,
+                    race: race, tagData: tagData, isFrozen: false, isBurning: false
+                };
+                updateMobNameTag(mobObj);
+                mobs.push(mobObj);
             }
-
-            document.getElementById('ui-day').textContent = currentDay;
-            document.getElementById('ui-mob-count').textContent = mobs.length;
-            showDayBanner(currentDay);
-            addLog(`[Amanecer]: El Día ${currentDay} ha comenzado. ¡${mobCount} enemigos se acercan!`);
-            isTransitioning = false; 
+            updateUIStats();
         }
 
-        function triggerGameOver() {
-            addLog(`[CRÍTICO]: ¡El Núcleo ha sido destruido o has caído! Volviendo al Día 1...`);
-            
-            mobs.forEach(m => scene.remove(m.group));
-            mobs = [];
+        function executeMeleeAttack() {
+            if (player.stamina < 15) return;
+            player.stamina -= 15;
+            isAttackingAnim = true;
+            attackAnimProgress = 0;
 
-            player.hp = player.maxHp;
-            player.mesh.position.set(8, 0, 8);
-            document.getElementById('ui-hp').textContent = `${player.hp}/${player.maxHp}`;
-
-            zone.hp = zone.maxHp;
-            document.getElementById('ui-core-hp').textContent = `${zone.hp}/${zone.maxHp}`;
-            
-            currentDay = 1;
-            isTransitioning = true;
-            setTimeout(() => startNewDay(currentDay), 1500);
-        }
-
-        function animate() {
-            if (!gameStarted) return;
-            requestAnimationFrame(animate);
-
-            let moveX = 0, moveZ = 0;
-            if (keys['KeyW'] || keys['ArrowUp']) moveZ -= 1;
-            if (keys['KeyS'] || keys['ArrowDown']) moveZ += 1;
-            if (keys['KeyA'] || keys['ArrowLeft']) moveX -= 1;
-            if (keys['KeyD'] || keys['ArrowRight']) moveX += 1;
-
-            if (moveX !== 0 && moveZ !== 0) { moveX *= 0.7071; moveZ *= 0.7071; }
-
-            player.mesh.position.x += moveX * player.speed;
-            player.mesh.position.z += moveZ * player.speed;
-
-            if (moveX !== 0 || moveZ !== 0) {
-                player.mesh.rotation.y = Math.atan2(moveX, moveZ);
-            }
-
-            zone.crystal.rotation.y += 0.02;
-            zone.crystal.rotation.z += 0.01;
-
+            let activeWpn = player.inventory[player.activeWeaponIndex];
             mobs.forEach(mob => {
-                const mobPos = mob.group.position;
-                const playerPos = player.mesh.position;
-                const corePos = zone.mesh.position;
-
-                const distToPlayer = mobPos.distanceTo(playerPos);
-                const distToCore = mobPos.distanceTo(corePos);
-
-                let targetPos = distToPlayer < 12 ? playerPos : corePos;
-
-                const dx = targetPos.x - mobPos.x;
-                const dz = targetPos.z - mobPos.z;
-                const dist = Math.sqrt(dx*dx + dz*dz);
-                
-                if (dist > 0.1) {
-                    mobPos.x += (dx / dist) * mob.speed;
-                    mobPos.z += (dz / dist) * mob.speed;
-                    mob.group.lookAt(targetPos.x, targetPos.y, targetPos.z);
-                }
-
-                if (distToPlayer < 2.0) {
-                    player.hp = Math.max(0, player.hp - mob.damage);
-                    document.getElementById('ui-hp').textContent = `${Math.floor(player.hp)}/${player.maxHp}`;
-                    if (player.hp <= 0 && !isTransitioning) triggerGameOver();
-                }
-
-                if (distToCore < 4.5) {
-                    zone.hp = Math.max(0, zone.hp - mob.damage);
-                    document.getElementById('ui-core-hp').textContent = `${Math.floor(zone.hp)}/${zone.maxHp}`;
-                    if (zone.hp <= 0 && !isTransitioning) triggerGameOver();
+                if (player.mesh.position.distanceTo(mob.mesh.position) <= player.attackRange) {
+                    let dmg = player.damage * activeWpn.damageMult;
+                    if (activeWpn.element === 'ice') mob.isFrozen = true;
+                    if (activeWpn.element === 'fire') {
+                        if (mob.isFrozen) { dmg *= 2.5; mob.isFrozen = false; }
+                        else mob.isBurning = true;
+                    }
+                    mob.hp -= dmg;
+                    if (player.vampirism > 0) player.hp = Math.min(player.maxHp, player.hp + player.vampirism);
+                    updateMobNameTag(mob);
                 }
             });
-
-            mobs = mobs.filter(mob => {
-                if (mob.hp <= 0) {
-                    scene.remove(mob.group);
-                    return false;
-                }
-                return true;
-            });
-
-            document.getElementById('ui-mob-count').textContent = mobs.length;
-
-            if (mobs.length === 0 && !isTransitioning) {
-                isTransitioning = true;
-                currentDay++;
-                
-                zone.hp = Math.min(zone.maxHp, zone.hp + 50);
-                document.getElementById('ui-core-hp').textContent = `${Math.floor(zone.hp)}/${zone.maxHp}`;
-                
-                addLog(`[¡Victoria!]: El núcleo sobrevive. Preparando el Día ${currentDay}... (+50 HP Núcleo)`);
-                
-                setTimeout(() => {
-                    startNewDay(currentDay);
-                }, 2500);
-            }
-
-            camera.position.x = player.mesh.position.x;
-            camera.position.y = player.mesh.position.y + 16;
-            camera.position.z = player.mesh.position.z + 16;
-            camera.lookAt(player.mesh.position.x, player.mesh.position.y + 1, player.mesh.position.z);
-
-            renderer.render(scene, camera);
-        }
-
-        function playerAttack3D() {
-            if (mobs.length === 0) return;
-            let hitCount = 0;
-            mobs.forEach(mob => {
-                const dist = player.mesh.position.distanceTo(mob.group.position);
-                if (dist <= player.attackRange) {
-                    mob.hp -= player.damage;
-                    hitCount++;
-                    mob.group.position.lerp(player.mesh.position, -0.2);
-                }
-            });
-            if (hitCount > 0) addLog(`[Ataque]: ¡Cortaste a ${hitCount} enemigo(s)!`);
+            updateUIStats();
         }
 
         function playerSuperPulse() {
-            if (mobs.length === 0) return;
-            let hitCount = 0;
+            if (player.mana < 40) return;
+            player.mana -= 40;
             mobs.forEach(mob => {
-                const dist = player.mesh.position.distanceTo(mob.group.position);
-                if (dist <= 9.0) {
-                    mob.hp -= player.damage * 1.5;
-                    hitCount++;
+                if (player.mesh.position.distanceTo(mob.mesh.position) <= 12) {
+                    mob.hp -= player.damage * 2.5;
+                    updateMobNameTag(mob);
                 }
             });
-            addLog(`[Onda Expansiva]: ¡Despejaste un área con ${hitCount} bajas!`);
+            updateUIStats();
         }
 
         function addLog(text) {
@@ -393,11 +716,126 @@
             logs.scrollTop = logs.scrollHeight;
         }
 
-        window.addEventListener('resize', () => {
-            camera.aspect = window.innerWidth / window.innerHeight;
-            camera.updateProjectionMatrix();
-            renderer.setSize(window.innerWidth, window.innerHeight);
-        });
+        function updateUIStats() {
+            document.getElementById('ui-hp').textContent = `${Math.floor(player.hp)}/${player.maxHp}`;
+            document.getElementById('ui-stamina').textContent = `${Math.floor(player.stamina)}/${player.maxStamina}`;
+            document.getElementById('ui-mana').textContent = `${Math.floor(player.mana)}/${player.maxMana}`;
+            document.getElementById('ui-credits').textContent = player.credits;
+            document.getElementById('ui-core-hp').textContent = `${Math.floor(zone.hp)}/${zone.maxHp}`;
+            document.getElementById('ui-day').textContent = currentDay;
+            document.getElementById('ui-mob-count').textContent = mobs.length;
+            document.getElementById('ui-level').textContent = player.level;
+            document.getElementById('exp-bar-fill').style.width = `${(player.exp / player.nextLevelExp) * 100}%`;
+        }
+
+        function triggerGameOver() {
+            gameStarted = false;
+            showDayBanner("¡JUEGO TERMINADO!", 0);
+            setTimeout(() => location.reload(), 2500);
+        }
+
+        const minimapCanvas = document.getElementById('minimap-canvas');
+        const minimapCtx = minimapCanvas.getContext('2d');
+
+        function drawMinimap() {
+            minimapCtx.clearRect(0, 0, 100, 100);
+            minimapCtx.fillStyle = '#05050c';
+            minimapCtx.fillRect(0, 0, 100, 100);
+            const sf = 100 / 150;
+            minimapCtx.fillStyle = '#0984e3';
+            minimapCtx.beginPath();
+            minimapCtx.arc(50, 50, 4, 0, Math.PI * 2);
+            minimapCtx.fill();
+
+            mobs.forEach(mob => {
+                let dx = (mob.mesh.position.x - coreGroup.position.x) * sf;
+                let dz = (mob.mesh.position.z - coreGroup.position.z) * sf;
+                minimapCtx.fillStyle = '#e17055';
+                minimapCtx.fillRect(50 + dx - 1.5, 50 + dz - 1.5, 3, 3);
+            });
+            let pdx = (player.mesh.position.x - coreGroup.position.x) * sf;
+            let pdz = (player.mesh.position.z - coreGroup.position.z) * sf;
+            minimapCtx.fillStyle = '#00ffcc';
+            minimapCtx.beginPath();
+            minimapCtx.arc(50 + pdx, 50 + pdz, 2.5, 0, Math.PI * 2);
+            minimapCtx.fill();
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            if (!gameStarted || isPaused || isLevelingUp || isShopping || isClassSelecting) return;
+
+            animationTime += 0.05;
+            if (player.stamina < player.maxStamina) player.stamina = Math.min(player.maxStamina, player.stamina + player.staminaRegen);
+            if (player.mana < player.maxMana) player.mana = Math.min(player.maxMana, player.mana + player.manaRegen);
+
+            let moveX = 0, moveZ = 0;
+            if (keys['KeyW']) moveZ -= 1;
+            if (keys['KeyS']) moveZ += 1;
+            if (keys['KeyA']) moveX -= 1;
+            if (keys['KeyD']) moveX += 1;
+
+            if (joystickActive) {
+                moveX = joystickMoveX;
+                moveZ = joystickMoveZ;
+            }
+
+            if (moveX !== 0 || moveZ !== 0) {
+                const len = Math.sqrt(moveX * moveX + moveZ * moveZ);
+                moveX /= len; moveZ /= len;
+
+                const speed = keys['ShiftLeft'] ? player.runSpeed : player.walkSpeed;
+                const rx = moveX * Math.cos(cameraAngleX) + moveZ * Math.sin(cameraAngleX);
+                const rz = -moveX * Math.sin(cameraAngleX) + moveZ * Math.cos(cameraAngleX);
+
+                player.mesh.position.x += rx * speed;
+                player.mesh.position.z += rz * speed;
+                player.mesh.rotation.y = Math.atan2(rx, rz);
+            }
+
+            const camX = player.mesh.position.x + Math.sin(cameraAngleX) * cameraDistance;
+            const camZ = player.mesh.position.z + Math.cos(cameraAngleX) * cameraDistance;
+            camera.position.x += (camX - camera.position.x) * 0.1;
+            camera.position.y += (cameraHeight - camera.position.y) * 0.1;
+            camera.position.z += (camZ - camera.position.z) * 0.1;
+            camera.lookAt(player.mesh.position.x, player.mesh.position.y + 1.0, player.mesh.position.z);
+
+            for (let i = mobs.length - 1; i >= 0; i--) {
+                const mob = mobs[i];
+                let curSpeed = mob.isFrozen ? mob.speed * 0.25 : mob.speed;
+                let distP = mob.mesh.position.distanceTo(player.mesh.position);
+                let distC = mob.mesh.position.distanceTo(coreGroup.position);
+
+                if (distP < 4.5 && distP > 2.0) {
+                    mob.mesh.lookAt(player.mesh.position);
+                    mob.mesh.translateZ(curSpeed);
+                } else if (distC > 4.0) {
+                    mob.mesh.lookAt(coreGroup.position);
+                    mob.mesh.translateZ(curSpeed);
+                } else {
+                    if (distP < 4.5) {
+                        player.hp -= mob.damage * 0.05;
+                        if (player.hp <= 0) triggerGameOver();
+                    } else {
+                        zone.hp -= mob.damage * 0.05;
+                        if (zone.hp <= 0) triggerGameOver();
+                    }
+                }
+
+                if (mob.hp <= 0) {
+                    scene.remove(mob.mesh);
+                    mobs.splice(i, 1);
+                    player.credits += 20;
+                    addExp(40);
+                }
+            }
+
+            if (mobs.length === 0) triggerShop();
+
+            updateUIStats();
+            drawMinimap();
+            renderer.render(scene, camera);
+        }
     </script>
 </body>
 </html>

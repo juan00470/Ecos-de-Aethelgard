@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ecos de Aethelgard - Supervivencia Extrema (200+ Días)</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body, html { width: 100%; height: 100%; background: #030306; color: #fff; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; overflow: hidden; }
+        #ui-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; display: flex; flex-direction: column; justify-content: space-between; padding: 15px; z-index: 10; }
+        .panel { background: rgba(10, 10, 20, 0.85); border: 1px solid rgba(0, 255, 204, 0.4); border-radius: 8px; padding: 10px 15px; backdrop-filter: blur(6px); pointer-events: auto; box-shadow: 0 4px 20px rgba(0,0,0,0.6); }
+        .top-bar { display: flex; justify-content: space-between; align-items: center; }
+        .stats-group { display: flex; gap: 20px; font-size: 13px; font-weight: bold; flex-wrap: wrap; }
+        .stat-item span { color: #00ffcc; }
+        .bottom-bar { display: flex; gap: 15px; height: 140px; }
+        .chat-box { flex: 2; display: flex; flex-direction: column; }
+        .chat-messages { flex: 1; overflow-y: auto; font-size: 11px; color: #a5b1c2; display: flex; flex-direction: column; gap: 4px; margin-bottom: 5px; }
+        .action-bar { flex: 1; display: flex; flex-direction: column; gap: 8px; }
+        .btn { background: linear-gradient(135deg, #00b894, #00cec9); border: none; color: white; padding: 8px 12px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 12px; transition: all 0.2s; box-shadow: 0 2px 8px rgba(0,206,201,0.3); }
+        .btn:hover { filter: brightness(1.2); transform: translateY(-1px); }
+        #render-container { position: absolute; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 1; }
+        #day-banner { position: absolute; top: 40%; left: 50%; transform: translate(-50%, -50%); font-size: 40px; font-weight: bold; color: #00ffcc; text-shadow: 0 0 20px rgba(0,255,204,0.8); opacity: 0; transition: opacity 1s; pointer-events: none; z-index: 20;}
+        
+        /* Pantalla de inicio con enlace directo a Google */
+        #start-screen { position: absolute; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(3, 3, 6, 0.95); z-index: 100; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 20px; }
+        #start-screen h1 { color: #00ffcc; font-size: 32px; text-shadow: 0 0 10px rgba(0,255,204,0.5); }
+        #start-screen p { color: #a5b1c2; font-size: 14px; max-width: 400px; text-align: center; }
+        .main-btn { background: linear-gradient(135deg, #00b894, #00cec9); border: none; color: white; padding: 12px 24px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 16px; box-shadow: 0 4px 15px rgba(0,206,201,0.4); text-decoration: none; display: inline-block; }
+        .main-btn:hover { filter: brightness(1.2); }
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+</head>
+<body>
+
+    <!-- Pantalla de Bienvenida con acceso directo a Google -->
+    <div id="start-screen">
+        <h1>ECOS DE AETHELGARD</h1>
+        <p>Supervivencia Extrema (200+ Días). Protege el núcleo central de las hordas progresivas.</p>
+        <div style="display: flex; gap: 15px;">
+            <button class="main-btn" onclick="startGame()">Jugar Aquí</button>
+            <a class="main-btn" style="background: linear-gradient(135deg, #0984e3, #74b9ff);" href="https://www.google.com" target="_blank">Abrir Google Directo</a>
+        </div>
+    </div>
+
+    <div id="ui-layer">
+        <div class="top-bar">
+            <div class="panel stats-group">
+                <div class="stat-item">DEFENSOR: <span>Guardián_01</span></div>
+                <div class="stat-item">HP: <span id="ui-hp">100/100</span></div>
+                <div class="stat-item">NÚCLEO HP: <span id="ui-core-hp">500/500</span></div>
+                <div class="stat-item">DÍA: <span id="ui-day">1</span> / 200+</div>
+                <div class="stat-item">RESTANTES: <span id="ui-mob-count">0</span></div>
+            </div>
+            <div class="panel">
+                <button class="btn" style="background: #d63031;" onclick="triggerGameOver()">Reiniciar Partida</button>
+            </div>
+        </div>
+
+        <div class="bottom-bar">
+            <div class="panel chat-box">
+                <div class="chat-messages" id="chat-logs">
+                    <div>[Sistema]: Dificultad configurada a "Supervivencia Extrema". El crecimiento de enemigos ahora es proporcional.</div>
+                    <div>[Consejo]: El núcleo recupera un poco de energía cada día superado. ¡Prepárate!</div>
+                </div>
+            </div>
+            <div class="panel action-bar">
+                <div style="font-size: 12px; font-weight: bold; color: #00ffcc;">DEFENSA DE ZONA</div>
+                <div style="display: flex; gap: 8px;">
+                    <button class="btn" style="flex:1;" onclick="playerAttack3D()">[1] Espadazo Rápido</button>
+                    <button class="btn" style="flex:1; background: #6c5ce7;" onclick="playerSuperPulse()">[2] Onda Expansiva</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div id="day-banner">DÍA 1</div>
+    <div id="render-container"></div>
+
+    <script>
+        const container = document.getElementById('render-container');
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x030306);
+        scene.fog = new THREE.FogExp2(0x030306, 0.015);
+
+        const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.shadowMap.enabled = true;
+        container.appendChild(renderer.domElement);
+
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.4);
+        scene.add(ambientLight);
+
+        const dirLight = new THREE.DirectionalLight(0x00ffcc, 1.0);
+        dirLight.position.set(30, 50, 30);
+        dirLight.castShadow = true;
+        scene.add(dirLight);
+
+        const floorGeo = new THREE.PlaneGeometry(400, 400, 50, 50);
+        const floorMat = new THREE.MeshStandardMaterial({ color: 0x080812, roughness: 0.9 });
+        const floor = new THREE.Mesh(floorGeo, floorMat);
+        floor.rotation.x = -Math.PI / 2;
+        floor.receiveShadow = true;
+        scene.add(floor);
+
+        const grid = new THREE.GridHelper(400, 80, 0x00ffcc, 0x151528);
+        grid.position.y = 0.02;
+        scene.add(grid);
+
+        function generateRandomScenery() {
+            const geometries = [
+                new THREE.ConeGeometry(1.5, 5, 4),
+                new THREE.DodecahedronGeometry(2),
+                new THREE.BoxGeometry(2, 4, 2)
+            ];
+            const colors = [0x00cec9, 0x6c5ce7, 0xd63031, 0xfdcb6e, 0xe84393];
+
+            for (let i = 0; i < 60; i++) {
+                const geo = geometries[Math.floor(Math.random() * geometries.length)];
+                const color = colors[Math.floor(Math.random() * colors.length)];
+                const mat = new THREE.MeshStandardMaterial({ color: color, roughness: 0.3, metalness: 0.5 });
+                const mesh = new THREE.Mesh(geo, mat);
+
+                let posX = (Math.random() - 0.5) * 320;
+                let posZ = (Math.random() - 0.5) * 320;
+                if (Math.abs(posX) < 30) posX += 40 * Math.sign(posX);
+                if (Math.abs(posZ) < 30) posZ += 40 * Math.sign(posZ);
+
+                mesh.position.set(posX, 2, posZ);
+                mesh.rotation.set(Math.random() * Math.PI, Math.random() * Math.PI, 0);
+                mesh.castShadow = true;
+                scene.add(mesh);
+            }
+        }
+        generateRandomScenery();
+
+        const coreGroup = new THREE.Group();
+        const coreBase = new THREE.Mesh(
+            new THREE.CylinderGeometry(4, 5, 1.5, 8),
+            new THREE.MeshStandardMaterial({ color: 0x0984e3, roughness: 0.2, metalness: 0.8 })
+        );
+        coreBase.position.y = 0.75;
+        coreGroup.add(coreBase);
+
+        const coreCrystal = new THREE.Mesh(
+            new THREE.OctahedronGeometry(2.5),
+            new THREE.MeshStandardMaterial({ color: 0x00ffcc, emissive: 0x00ffcc, emissiveIntensity: 0.8, roughness: 0.1, wireframe: true })
+        );
+        coreCrystal.position.y = 3.5;
+        coreGroup.add(coreCrystal);
+        coreGroup.position.set(0, 0, 0);
+        scene.add(coreGroup);
+
+        const zone = {
+            mesh: coreGroup,
+            crystal: coreCrystal,
+            hp: 500,
+            maxHp: 500
+        };
+
+        function createEntityModel(primaryColor, isEnemy = false) {
+            const group = new THREE.Group();
+            const mat = new THREE.MeshStandardMaterial({ color: primaryColor, roughness: 0.3, metalness: 0.3 });
+            
+            const body = new THREE.Mesh(new THREE.BoxGeometry(0.8, 1.8, 0.4), mat);
+            body.position.y = 0.9;
+            group.add(body);
+            
+            const head = new THREE.Mesh(new THREE.OctahedronGeometry(0.35), mat);
+            head.position.y = 2.1;
+            group.add(head);
+
+            return group;
+        }
+
+        const playerGroup = createEntityModel(0x00ffcc);
+        const swordMat = new THREE.MeshStandardMaterial({ color: 0xffffff, emissive: 0x00ffff, emissiveIntensity: 0.5 });
+        const swordMesh = new THREE.Mesh(new THREE.BoxGeometry(0.1, 1.6, 0.05), swordMat);
+        swordMesh.position.set(0.6, 1.2, 0.4);
+        swordMesh.rotation.x = Math.PI / 4;
+        playerGroup.add(swordMesh);
+
+        playerGroup.position.set(8, 0, 8);
+        scene.add(playerGroup);
+
+        const player = {
+            mesh: playerGroup,
+            speed: 0.25,
+            hp: 100,
+            maxHp: 100,
+            attackRange: 4.5,
+            damage: 60
+        };
+
+        const keys = {};
+        window.addEventListener('keydown', e => keys[e.code] = true);
+        window.addEventListener('keyup', e => keys[e.code] = false);
+
+        let currentDay = 1;
+        let mobs = [];
+        let isTransitioning = false;
+        let gameStarted = false;
+
+        function startGame() {
+            document.getElementById('start-screen').style.display = 'none';
+            gameStarted = true;
+            startNewDay(currentDay);
+            animate();
+        }
+
+        function getMobCountForDay(day) {
+            return Math.floor(5 + (day * 3));
+        }
+
+        function showDayBanner(day) {
+            const banner = document.getElementById('day-banner');
+            banner.textContent = `DÍA ${day}`;
+            banner.style.opacity = 1;
+            setTimeout(() => { banner.style.opacity = 0; }, 2000);
+        }
+
+        function startNewDay(dayNumber) {
+            const mobCount = getMobCountForDay(dayNumber);
+            const enemyColors = [0xe17055, 0xd63031, 0xe84393, 0xa29bfe];
+
+            for (let i = 0; i < mobCount; i++) {
+                const primaryCol = enemyColors[Math.floor(Math.random() * enemyColors.length)];
+                const enemyGroup = createEntityModel(primaryCol, true);
+
+                const angle = Math.random() * Math.PI * 2;
+                const distance = 45 + Math.random() * 50; 
+                enemyGroup.position.set(
+                    Math.cos(angle) * distance,
+                    0,
+                    Math.sin(angle) * distance
+                );
+
+                scene.add(enemyGroup);
+
+                mobs.push({
+                    group: enemyGroup,
+                    hp: 40 + (dayNumber * 0.5),
+                    maxHp: 40,
+                    speed: 0.05 + (dayNumber * 0.0005),
+                    damage: 0.5 + (dayNumber * 0.02)
+                });
+            }
+
+            document.getElementById('ui-day').textContent = currentDay;
+            document.getElementById('ui-mob-count').textContent = mobs.length;
+            showDayBanner(currentDay);
+            addLog(`[Amanecer]: El Día ${currentDay} ha comenzado. ¡${mobCount} enemigos se acercan!`);
+            isTransitioning = false; 
+        }
+
+        function triggerGameOver() {
+            addLog(`[CRÍTICO]: ¡El Núcleo ha sido destruido o has caído! Volviendo al Día 1...`);
+            
+            mobs.forEach(m => scene.remove(m.group));
+            mobs = [];
+
+            player.hp = player.maxHp;
+            player.mesh.position.set(8, 0, 8);
+            document.getElementById('ui-hp').textContent = `${player.hp}/${player.maxHp}`;
+
+            zone.hp = zone.maxHp;
+            document.getElementById('ui-core-hp').textContent = `${zone.hp}/${zone.maxHp}`;
+            
+            currentDay = 1;
+            isTransitioning = true;
+            setTimeout(() => startNewDay(currentDay), 1500);
+        }
+
+        function animate() {
+            if (!gameStarted) return;
+            requestAnimationFrame(animate);
+
+            let moveX = 0, moveZ = 0;
+            if (keys['KeyW'] || keys['ArrowUp']) moveZ -= 1;
+            if (keys['KeyS'] || keys['ArrowDown']) moveZ += 1;
+            if (keys['KeyA'] || keys['ArrowLeft']) moveX -= 1;
+            if (keys['KeyD'] || keys['ArrowRight']) moveX += 1;
+
+            if (moveX !== 0 && moveZ !== 0) { moveX *= 0.7071; moveZ *= 0.7071; }
+
+            player.mesh.position.x += moveX * player.speed;
+            player.mesh.position.z += moveZ * player.speed;
+
+            if (moveX !== 0 || moveZ !== 0) {
+                player.mesh.rotation.y = Math.atan2(moveX, moveZ);
+            }
+
+            zone.crystal.rotation.y += 0.02;
+            zone.crystal.rotation.z += 0.01;
+
+            mobs.forEach(mob => {
+                const mobPos = mob.group.position;
+                const playerPos = player.mesh.position;
+                const corePos = zone.mesh.position;
+
+                const distToPlayer = mobPos.distanceTo(playerPos);
+                const distToCore = mobPos.distanceTo(corePos);
+
+                let targetPos = distToPlayer < 12 ? playerPos : corePos;
+
+                const dx = targetPos.x - mobPos.x;
+                const dz = targetPos.z - mobPos.z;
+                const dist = Math.sqrt(dx*dx + dz*dz);
+                
+                if (dist > 0.1) {
+                    mobPos.x += (dx / dist) * mob.speed;
+                    mobPos.z += (dz / dist) * mob.speed;
+                    mob.group.lookAt(targetPos.x, targetPos.y, targetPos.z);
+                }
+
+                if (distToPlayer < 2.0) {
+                    player.hp = Math.max(0, player.hp - mob.damage);
+                    document.getElementById('ui-hp').textContent = `${Math.floor(player.hp)}/${player.maxHp}`;
+                    if (player.hp <= 0 && !isTransitioning) triggerGameOver();
+                }
+
+                if (distToCore < 4.5) {
+                    zone.hp = Math.max(0, zone.hp - mob.damage);
+                    document.getElementById('ui-core-hp').textContent = `${Math.floor(zone.hp)}/${zone.maxHp}`;
+                    if (zone.hp <= 0 && !isTransitioning) triggerGameOver();
+                }
+            });
+
+            mobs = mobs.filter(mob => {
+                if (mob.hp <= 0) {
+                    scene.remove(mob.group);
+                    return false;
+                }
+                return true;
+            });
+
+            document.getElementById('ui-mob-count').textContent = mobs.length;
+
+            if (mobs.length === 0 && !isTransitioning) {
+                isTransitioning = true;
+                currentDay++;
+                
+                zone.hp = Math.min(zone.maxHp, zone.hp + 50);
+                document.getElementById('ui-core-hp').textContent = `${Math.floor(zone.hp)}/${zone.maxHp}`;
+                
+                addLog(`[¡Victoria!]: El núcleo sobrevive. Preparando el Día ${currentDay}... (+50 HP Núcleo)`);
+                
+                setTimeout(() => {
+                    startNewDay(currentDay);
+                }, 2500);
+            }
+
+            camera.position.x = player.mesh.position.x;
+            camera.position.y = player.mesh.position.y + 16;
+            camera.position.z = player.mesh.position.z + 16;
+            camera.lookAt(player.mesh.position.x, player.mesh.position.y + 1, player.mesh.position.z);
+
+            renderer.render(scene, camera);
+        }
+
+        function playerAttack3D() {
+            if (mobs.length === 0) return;
+            let hitCount = 0;
+            mobs.forEach(mob => {
+                const dist = player.mesh.position.distanceTo(mob.group.position);
+                if (dist <= player.attackRange) {
+                    mob.hp -= player.damage;
+                    hitCount++;
+                    mob.group.position.lerp(player.mesh.position, -0.2);
+                }
+            });
+            if (hitCount > 0) addLog(`[Ataque]: ¡Cortaste a ${hitCount} enemigo(s)!`);
+        }
+
+        function playerSuperPulse() {
+            if (mobs.length === 0) return;
+            let hitCount = 0;
+            mobs.forEach(mob => {
+                const dist = player.mesh.position.distanceTo(mob.group.position);
+                if (dist <= 9.0) {
+                    mob.hp -= player.damage * 1.5;
+                    hitCount++;
+                }
+            });
+            addLog(`[Onda Expansiva]: ¡Despejaste un área con ${hitCount} bajas!`);
+        }
+
+        function addLog(text) {
+            const logs = document.getElementById('chat-logs');
+            const div = document.createElement('div');
+            div.textContent = text;
+            logs.appendChild(div);
+            logs.scrollTop = logs.scrollHeight;
+        }
+
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+    </script>
+</body>
+</html>
